@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -431,6 +432,12 @@ html,body{
   }
 
   /* ── TEAR: rasgo do stub (mouse + touch) ── */
+  /* trigger invisível — garante abertura no mobile dentro do gesto */
+  var trigger = document.createElement('a');
+  trigger.href = WA; trigger.target = '_blank'; trigger.rel = 'noopener noreferrer';
+  trigger.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+  document.body.appendChild(trigger);
+
   var startX = 0, dragging = false, curDelta = 0;
 
   function onStart(x){
@@ -438,7 +445,7 @@ html,body{
     dragging = true;
     startX = x;
     stub.style.transition = 'none';
-    if(mobile){ card.style.animation='none'; holo.style.animation='none'; }
+    /* cartão continua animando normalmente */
   }
 
   function onMove(x){
@@ -446,10 +453,10 @@ html,body{
     curDelta = Math.max(0, x - startX);
     var prog = Math.min(curDelta / THRESHOLD, 1);
     stub.style.transform = 'translateX('+curDelta+'px)';
-    stub.style.opacity = 1 - prog * 0.3;
+    stub.style.opacity = String(1 - prog * 0.35);
     stub.classList.toggle('tearing', curDelta > 8);
-    if(hint) hint.style.opacity = Math.max(0, 1 - prog * 2);
-    holo.style.opacity = prog * 0.9;
+    if(hint) hint.style.opacity = String(Math.max(0, 1 - prog * 2));
+    holo.style.opacity = String(prog * 0.9);
     holo.style.background = 'conic-gradient(from '+(160+prog*60)+'deg at 80% 50%,rgba(189,239,245,0) 0deg,rgba(189,239,245,'+prog*.5+') 40deg,rgba(255,235,100,'+prog*.4+') 100deg,rgba(189,239,245,0) 180deg)';
   }
 
@@ -457,44 +464,37 @@ html,body{
     if(!dragging||torn) return;
     dragging = false;
     if(curDelta >= THRESHOLD){
-      /* DESLIZOU — anima e abre o link */
       torn = true;
-      stub.style.transition = 'transform 0.35s cubic-bezier(.4,0,.2,1), opacity 0.3s ease';
-      stub.style.transform = 'translateX(160px)';
+      /* abre o link AQUI, dentro do gesto — sem setTimeout */
+      trigger.click();
+      /* animação de saída roda em paralelo */
+      stub.style.transition = 'transform 0.35s cubic-bezier(.4,0,.2,1), opacity 0.28s ease';
+      stub.style.transform = 'translateX(200px)';
       stub.style.opacity = '0';
-      card.style.transition = 'transform 0.2s ease';
-      card.style.transform = 'rotate(-2deg) rotateX(0) rotateY(0) scale(0.97)';
-      holo.style.opacity = '0';
       holo.style.transition = 'opacity 0.3s';
-      setTimeout(function(){ window.open(WA,'_blank','noopener'); }, 280);
+      holo.style.opacity = '0';
     } else {
-      /* Snap-back — volta tudo ao estado original */
+      /* snap-back — restaura completamente */
       stub.style.transition = 'transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.25s ease';
       stub.style.transform = 'translateX(0)';
       stub.style.opacity = '1';
       stub.classList.remove('tearing');
-      if(hint){ hint.style.opacity='1'; hint.style.transition='opacity 0.2s'; }
-      holo.style.opacity = mobile ? '1' : '0';
+      if(hint){ hint.style.transition='opacity 0.2s'; hint.style.opacity='1'; }
       holo.style.transition = 'opacity 0.3s';
-      if(mobile){
-        setTimeout(function(){
-          card.style.animation='card-rock 5s ease-in-out infinite';
-          holo.style.animation='holo-rock 5s ease-in-out infinite';
-        }, 350);
-      }
+      holo.style.opacity = mobile ? '1' : '0';
       curDelta = 0;
     }
   }
 
   /* mouse */
   stub.addEventListener('mousedown', function(e){ onStart(e.clientX); e.preventDefault(); });
-  window.addEventListener('mousemove', function(e){ onMove(e.clientX); });
+  window.addEventListener('mousemove', function(e){ if(dragging) onMove(e.clientX); });
   window.addEventListener('mouseup',   function(){ onEnd(); });
 
-  /* touch */
+  /* touch — touchend precisa chamar onEnd diretamente no evento */
   stub.addEventListener('touchstart', function(e){ onStart(e.touches[0].clientX); }, {passive:true});
-  window.addEventListener('touchmove', function(e){ if(dragging) onMove(e.touches[0].clientX); }, {passive:true});
-  window.addEventListener('touchend',  function(){ onEnd(); }, {passive:true});
+  stub.addEventListener('touchmove',  function(e){ onMove(e.touches[0].clientX); }, {passive:true});
+  stub.addEventListener('touchend',   function(e){ onEnd(); });
 })();
 </script>
 </body>
