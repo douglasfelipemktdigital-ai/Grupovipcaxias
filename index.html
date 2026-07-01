@@ -123,7 +123,14 @@ html,body{
 @keyframes scan{0%{left:-40%;opacity:0;}10%{opacity:1;}80%{opacity:1;}100%{left:140%;opacity:0;}}
 .card-name{font-family:'Fraunces',serif;font-size:17px;font-weight:600;margin-bottom:9px;line-height:1.1;}
 .card-name em{font-style:italic;color:#BDEFF5;font-weight:500;}
-.card-cut{
+.card-meta{
+  display:flex;gap:10px;margin-bottom:10px;
+}
+.card-meta-item{display:flex;flex-direction:column;gap:2px;flex:1;}
+.meta-k{font-size:7.5px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.38);}
+.meta-v{font-size:11px;font-weight:600;color:rgba(255,255,255,0.85);}
+
+
   margin:0 -18px;position:relative;
   height:20px;
   overflow:visible;
@@ -329,6 +336,20 @@ html,body{
           </div>
           <div class="card-stripe"><div class="card-scan"></div></div>
           <div class="card-name">Grupo <em>VIP</em><br>Caxias</div>
+          <div class="card-meta">
+            <div class="card-meta-item">
+              <span class="meta-k">Acesso</span>
+              <span class="meta-v">Antecipado</span>
+            </div>
+            <div class="card-meta-item">
+              <span class="meta-k">Tipo</span>
+              <span class="meta-v">Exclusivo</span>
+            </div>
+            <div class="card-meta-item">
+              <span class="meta-k">Unidade</span>
+              <span class="meta-v">Caxias</span>
+            </div>
+          </div>
           <div class="card-cut"></div>
           <div class="card-stub" id="cardStub">
             <div class="tear-shadow"></div>
@@ -459,29 +480,39 @@ html,body{
     holo.style.background = 'conic-gradient(from '+(160+prog*60)+'deg at 80% 50%,rgba(189,239,245,0) 0deg,rgba(189,239,245,'+prog*.5+') 40deg,rgba(255,235,100,'+prog*.4+') 100deg,rgba(189,239,245,0) 180deg)';
   }
 
+  function resetStub(){
+    torn = false;
+    stub.style.transition = 'transform 0.5s cubic-bezier(.34,1.2,.64,1), opacity 0.4s ease';
+    stub.style.transform = 'translateX(0)';
+    stub.style.opacity = '1';
+    stub.classList.remove('tearing');
+    if(hint){ hint.style.transition='opacity 0.4s'; hint.style.opacity='1'; }
+    holo.style.transition = 'opacity 0.4s';
+    holo.style.opacity = mobile ? '1' : '0';
+    curDelta = 0;
+  }
+
   function onEnd(){
     if(!dragging||torn) return;
     dragging = false;
     if(curDelta >= THRESHOLD){
       torn = true;
-      /* abre o link AQUI, dentro do gesto — sem setTimeout */
-      trigger.click();
-      /* animação de saída roda em paralelo */
-      stub.style.transition = 'transform 0.35s cubic-bezier(.4,0,.2,1), opacity 0.28s ease';
+      /* animação de saída */
+      stub.style.transition = 'transform 0.32s cubic-bezier(.4,0,.2,1), opacity 0.25s ease';
       stub.style.transform = 'translateX(200px)';
       stub.style.opacity = '0';
       holo.style.transition = 'opacity 0.3s';
       holo.style.opacity = '0';
+      /* abre o link — location.href no mobile (nunca bloqueado), open no desktop */
+      if(mobile){
+        window.location.href = WA;
+      } else {
+        window.open(WA, '_blank', 'noopener');
+      }
+      /* stub volta sozinho após 1.8s — cartão fica inteiro de novo */
+      setTimeout(resetStub, 1800);
     } else {
-      /* snap-back — restaura completamente */
-      stub.style.transition = 'transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.25s ease';
-      stub.style.transform = 'translateX(0)';
-      stub.style.opacity = '1';
-      stub.classList.remove('tearing');
-      if(hint){ hint.style.transition='opacity 0.2s'; hint.style.opacity='1'; }
-      holo.style.transition = 'opacity 0.3s';
-      holo.style.opacity = mobile ? '1' : '0';
-      curDelta = 0;
+      resetStub();
     }
   }
 
@@ -490,10 +521,10 @@ html,body{
   window.addEventListener('mousemove', function(e){ if(dragging) onMove(e.clientX); });
   window.addEventListener('mouseup',   function(){ onEnd(); });
 
-  /* touch — touchend precisa chamar onEnd diretamente no evento */
+  /* touch — eventos diretamente no stub para preservar gesto */
   stub.addEventListener('touchstart', function(e){ onStart(e.touches[0].clientX); }, {passive:true});
-  stub.addEventListener('touchmove',  function(e){ onMove(e.touches[0].clientX); }, {passive:true});
-  stub.addEventListener('touchend',   function(e){ onEnd(); });
+  stub.addEventListener('touchmove',  function(e){ e.stopPropagation(); onMove(e.touches[0].clientX); }, {passive:true});
+  stub.addEventListener('touchend',   function(e){ e.stopPropagation(); onEnd(); });
 })();
 </script>
 </body>
