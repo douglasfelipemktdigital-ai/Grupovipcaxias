@@ -162,19 +162,19 @@ html,body{
 .card-stub:active{cursor:grabbing;}
 .card-stub:hover{background:rgba(255,255,255,0.09);}
 
-/* indicador de puxar */
+/* indicador de deslizar */
 .stub-hint{
-  display:flex;align-items:center;justify-content:center;gap:5px;
+  display:flex;align-items:center;justify-content:center;gap:6px;
   margin-bottom:7px;
   font-size:9px;font-weight:700;letter-spacing:0.12em;
   text-transform:uppercase;
-  color:rgba(255,255,255,0.40);
-  animation:hint-bounce 1.8s ease-in-out infinite;
+  color:rgba(255,255,255,0.42);
+  animation:hint-slide 1.8s ease-in-out infinite;
 }
-.stub-hint svg{width:10px;height:10px;color:rgba(255,255,255,0.40);}
-@keyframes hint-bounce{
-  0%,100%{transform:translateY(0);opacity:0.40;}
-  50%{transform:translateY(3px);opacity:0.70;}
+.stub-hint svg{width:22px;height:10px;color:rgba(255,255,255,0.42);}
+@keyframes hint-slide{
+  0%,100%{transform:translateX(0);opacity:0.42;}
+  50%{transform:translateX(5px);opacity:0.75;}
 }
 .stub-foot{
   display:flex;justify-content:space-between;align-items:center;
@@ -183,16 +183,16 @@ html,body{
 .card-dots{display:flex;gap:4px;}
 .card-dots span{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.22);}
 
-/* sombra de rasgo que aparece ao puxar */
+/* sombra lateral que aparece ao deslizar */
 .tear-shadow{
   position:absolute;
-  top:-1px;left:0;right:0;height:6px;
-  background:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 100%);
+  top:0;left:-1px;bottom:0;width:6px;
+  background:linear-gradient(90deg,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 100%);
   pointer-events:none;
   transition:background .1s;
 }
 .card-stub.tearing .tear-shadow{
-  background:linear-gradient(180deg,rgba(0,0,0,0.45) 0%,rgba(0,0,0,0) 100%);
+  background:linear-gradient(90deg,rgba(0,0,0,0.50) 0%,rgba(0,0,0,0) 100%);
 }
 
 /* COPY */
@@ -239,16 +239,7 @@ html,body{
   font-size:12px;
   color:rgba(255,255,255,0.50);
 }
-.avatars{display:flex;}
-.avatars span{
-  width:24px;height:24px;border-radius:50%;
-  border:2px solid #0D3545;
-  background:linear-gradient(135deg,#1B7A93,#25D366);
-  margin-left:-7px;display:block;
-  font-size:9px;font-weight:700;color:#fff;
-  display:flex;align-items:center;justify-content:center;
-}
-.avatars span:first-child{margin-left:0;}
+/* social proof urgência */
 
 /* BOTÃO */
 .btn-wrap{position:relative;display:inline-block;width:100%;max-width:300px;}
@@ -342,8 +333,8 @@ html,body{
           <div class="card-stub" id="cardStub">
             <div class="tear-shadow"></div>
             <div class="stub-hint">
-              <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 1v8M2 6l3 3 3-3"/></svg>
-              puxe para entrar
+              <svg viewBox="0 0 22 10" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 5h18M14 1l5 4-5 4"/></svg>
+              deslize para entrar
             </div>
             <div class="stub-foot">
               <span class="card-code">EMC · CAXIAS · VIP</span>
@@ -374,12 +365,10 @@ html,body{
         </div>
       </div>
 
-      <!-- PROVA SOCIAL -->
+      <!-- URGÊNCIA -->
       <div class="social-proof">
-        <div class="avatars">
-          <span>A</span><span>C</span><span>R</span><span>M</span>
-        </div>
-        <span>Centenas de pessoas já fazem parte do grupo</span>
+        <span class="live-dot" style="width:8px;height:8px;flex-shrink:0;"></span>
+        <span>Vagas se encerrando — grupo ativo agora</span>
       </div>
 
       <!-- BOTÃO -->
@@ -442,67 +431,69 @@ html,body{
   }
 
   /* ── TEAR: rasgo do stub (mouse + touch) ── */
-  var startY = 0, dragging = false, curDelta = 0;
+  var startX = 0, dragging = false, curDelta = 0;
 
-  function onStart(y){
+  function onStart(x){
     if(torn) return;
     dragging = true;
-    startY = y;
+    startX = x;
     stub.style.transition = 'none';
     if(mobile){ card.style.animation='none'; holo.style.animation='none'; }
   }
 
-  function onMove(y){
+  function onMove(x){
     if(!dragging||torn) return;
-    curDelta = Math.max(0, y - startY);
+    curDelta = Math.max(0, x - startX);
     var prog = Math.min(curDelta / THRESHOLD, 1);
-    stub.style.transform = 'translateY('+curDelta+'px)';
+    stub.style.transform = 'translateX('+curDelta+'px)';
     stub.style.opacity = 1 - prog * 0.3;
     stub.classList.toggle('tearing', curDelta > 8);
     if(hint) hint.style.opacity = Math.max(0, 1 - prog * 2);
-    /* brilha o cartão conforme puxa */
     holo.style.opacity = prog * 0.9;
-    holo.style.background = 'conic-gradient(from '+(160+prog*60)+'deg at 50% 80%,rgba(189,239,245,0) 0deg,rgba(189,239,245,'+prog*.5+') 40deg,rgba(255,235,100,'+prog*.4+') 100deg,rgba(189,239,245,0) 180deg)';
+    holo.style.background = 'conic-gradient(from '+(160+prog*60)+'deg at 80% 50%,rgba(189,239,245,0) 0deg,rgba(189,239,245,'+prog*.5+') 40deg,rgba(255,235,100,'+prog*.4+') 100deg,rgba(189,239,245,0) 180deg)';
   }
 
   function onEnd(){
     if(!dragging||torn) return;
     dragging = false;
     if(curDelta >= THRESHOLD){
-      /* RASGOU — anima e abre o link */
+      /* DESLIZOU — anima e abre o link */
       torn = true;
       stub.style.transition = 'transform 0.35s cubic-bezier(.4,0,.2,1), opacity 0.3s ease';
-      stub.style.transform = 'translateY(120px)';
+      stub.style.transform = 'translateX(160px)';
       stub.style.opacity = '0';
       card.style.transition = 'transform 0.2s ease';
       card.style.transform = 'rotate(-2deg) rotateX(0) rotateY(0) scale(0.97)';
       holo.style.opacity = '0';
       holo.style.transition = 'opacity 0.3s';
-      setTimeout(function(){
-        window.open(WA, '_blank', 'noopener');
-      }, 280);
+      setTimeout(function(){ window.open(WA,'_blank','noopener'); }, 280);
     } else {
-      /* Voltou — snap back */
-      stub.style.transition = 'transform 0.3s cubic-bezier(.34,1.56,.64,1), opacity 0.2s ease';
-      stub.style.transform = 'translateY(0)';
+      /* Snap-back — volta tudo ao estado original */
+      stub.style.transition = 'transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.25s ease';
+      stub.style.transform = 'translateX(0)';
       stub.style.opacity = '1';
       stub.classList.remove('tearing');
-      if(hint) hint.style.opacity='1';
+      if(hint){ hint.style.opacity='1'; hint.style.transition='opacity 0.2s'; }
       holo.style.opacity = mobile ? '1' : '0';
       holo.style.transition = 'opacity 0.3s';
-      if(mobile){ card.style.animation='card-rock 5s ease-in-out infinite'; holo.style.animation='holo-rock 5s ease-in-out infinite'; }
+      if(mobile){
+        setTimeout(function(){
+          card.style.animation='card-rock 5s ease-in-out infinite';
+          holo.style.animation='holo-rock 5s ease-in-out infinite';
+        }, 350);
+      }
       curDelta = 0;
     }
   }
 
   /* mouse */
-  stub.addEventListener('mousedown', function(e){ onStart(e.clientY); e.preventDefault(); });
-  window.addEventListener('mousemove', function(e){ onMove(e.clientY); });
+  stub.addEventListener('mousedown', function(e){ onStart(e.clientX); e.preventDefault(); });
+  window.addEventListener('mousemove', function(e){ onMove(e.clientX); });
   window.addEventListener('mouseup',   function(){ onEnd(); });
 
   /* touch */
-  stub.addEventListener('touchstart', function(e){ onStart(e.touches[0].clientY); }, {passive:true});
-  window.addEventListener('touchmove', function(e){ if(dragging) onMove(e.touches[0].clientY); }, {passive:true});
+  stub.addEventListener('touchstart', function(e){ onStart(e.touches[0].clientX); }, {passive:true});
+  window.addEventListener('touchmove', function(e){ if(dragging) onMove(e.touches[0].clientX); }, {passive:true});
   window.addEventListener('touchend',  function(){ onEnd(); }, {passive:true});
 })();
 </script>
